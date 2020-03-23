@@ -1113,7 +1113,7 @@ class Access extends LDAPUtility {
 			if ($command == 'controlPagedResultResponse') {
 				throw new \InvalidArgumentException('Invoker does not support controlPagedResultResponse, call LDAP Wrapper directly instead.');
 			} else {
-				return call_user_func_array(array($this->ldap, $command), $arguments);
+				return call_user_func_array([$this->ldap, $command], $arguments);
 			}
 		};
 		try {
@@ -1133,7 +1133,7 @@ class Access extends LDAPUtility {
 				throw $e;
 			}
 
-			$arguments[0] = array_pad([], count($arguments[0]), $cr);
+			$arguments[0] = $cr;
 			$ret = $doMethod();
 		}
 		return $ret;
@@ -1151,7 +1151,13 @@ class Access extends LDAPUtility {
 	 * second | false if not successful
 	 * @throws ServerNotAvailableException
 	 */
-	private function executeSearch(string $filter, string $base, array &$attr, ?int $limit, ?int $offset) {
+	private function executeSearch(
+		string $filter,
+		string $base,
+		?array &$attr,
+		?int $limit,
+		?int $offset
+	) {
 		// See if we have a resource, in case not cancel with message
 		$cr = $this->connection->getConnectionResource();
 		if(!$this->ldap->isResource($cr)) {
@@ -1325,7 +1331,7 @@ class Access extends LDAPUtility {
 	public function search(
 		string $filter,
 		array $bases,
-		$attr = null,
+		?array $attr = null,
 		?int $limit = null,
 		?int $offset = null,
 		bool $skipHandling = false
@@ -2038,7 +2044,7 @@ class Access extends LDAPUtility {
 	private function initPagedSearch(
 		string $filter,
 		string $base,
-		array $attr,
+		?array $attr,
 		int $limit,
 		int $offset
 	): bool {
@@ -2076,7 +2082,7 @@ class Access extends LDAPUtility {
 			if(!is_null($cookie)) {
 				//since offset = 0, this is a new search. We abandon other searches that might be ongoing.
 				$this->abandonPagedSearch();
-				$pagedSearchOK = $this->invokeLDAPMethod('controlPagedResult',
+				$pagedSearchOK = true === $this->invokeLDAPMethod('controlPagedResult',
 					$this->connection->getConnectionResource(), $limit,
 					false);
 				if($pagedSearchOK) {
